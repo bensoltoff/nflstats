@@ -6,6 +6,11 @@
 .RData
 .RDs
 
+# R Markdown cache files
+.rdb
+.rdx
+*_cache
+
 # Example code in package build process
 *-Ex.R
 
