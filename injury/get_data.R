@@ -204,7 +204,7 @@ inactives <- lapply(1:17, function(x) get_inactives(x)) %>%
   bind_rows
 
 # combine reports
-both <- left_join(select(injury, injury:gameStatus, esbId, teamName, teamAbbr, week),
+both <- left_join(injury,
                   select(inactives, status, comments, esbId:week)) %>%
   filter(gameStatus != "--") %>%
   mutate(gameStatus = factor(gameStatus, levels = c("Probable", "Questionable", "Doubtful", "Out")),
@@ -271,6 +271,43 @@ both %>%
   scale_fill_manual(values = nfl_colors) +
   theme(legend.position = "none")
 
+# number of players on injury report, by team
+injury %>%
+  group_by(teamName, teamAbbr) %>%
+  summarize(n = n()) %>%
+  ungroup %>%
+  arrange(-n) %>%
+  mutate(teamAbbr = factor(teamAbbr, levels = teamAbbr)) %>%
+  ggplot(aes(teamAbbr, n, fill = teamName)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = nfl_colors) +
+  labs(x = "Team",
+       y = "Number of Players on Weekly Injury Reports") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+# proportion of players active, by inactive report and team
+both %>%
+  filter(!is.na(status),
+         gameStatus == "Probable") %>%
+  group_by(gameStatus, teamAbbr, teamName) %>%
+  summarize(active_n = sum(play),
+            n = n(),
+            prop = active_n / n,
+            se = (prop * (1 - prop)) / n,
+            lower = prop - 1.96 * se,
+            upper = prop + 1.96 * se) %>%
+  ungroup %>%
+  arrange(-prop) %>%
+  mutate(teamAbbr = factor(teamAbbr, levels = teamAbbr)) %>%
+  ggplot(aes(teamAbbr, prop, ymin = lower, ymax = upper, color = teamName)) +
+  geom_pointrange() +
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_manual(values = nfl_colors) +
+  labs(x = "Team",
+       y = "Percentage of Probable Players Active on Game Day") +
+  theme_bw() +
+  theme(legend.position = "none")
 
 
 
