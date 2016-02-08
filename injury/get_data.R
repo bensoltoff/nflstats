@@ -6,9 +6,17 @@ require(jsonlite)
 rm(list = ls())
 
 # get injury reports
-get_injury_report <- function(week = 1){
+get_injury_report <- function(week = 1, refresh = FALSE){
+  # check if local copy exists
+  url_local <- paste0("injury/reports/injury", week, ".html")
   url <- paste0("http://www.nfl.com/injuries?week=", week)
-  page <- readLines(url)
+  
+  if(file.exists(url_local) & refresh == FALSE) {
+    page <- readLines(url_local)
+  } else {
+    page <- readLines(url)
+    writeLines(page, con = url_local)
+  }
   
   page %<>%
     data_frame(raw = page) %>%
@@ -43,10 +51,18 @@ get_injury_report <- function(week = 1){
 }
 
 # were players active?
-get_inactives <- function(week = 1){
+get_inactives <- function(week = 1, refresh = FALSE){
+  # check if local copy exists
+  url_local <- paste0("injury/reports/inactives", week, ".html")
   url <- paste0("http://www.nfl.com/inactives?week=", week)
-  page <- readLines(url)
   
+  if(file.exists(url_local) & refresh == FALSE) {
+    page <- readLines(url_local)
+  } else {
+    page <- readLines(url)
+    writeLines(page, con = url_local)
+  }
+
   page %<>%
     data_frame(raw = page) %>%
     mutate(raw = str_trim(raw)) %>%
